@@ -64,6 +64,16 @@ class WerewolfActionModel(ActionModel):
                                v.name[1] != a and v.name[2] != a) or u == v)
                     for a in agents}
         ActionModel.__init__(self, actions, equivs)
+        
+class MasonActionModel(ActionModel):
+    def __init__(self, num_players):
+        agents = AGENTS[:num_players]
+        actions = [Action(f"m{i}{j}", And(Atom(f"m{i}"), Atom(f"m{j}"))) for i in agents for j in agents if i < j]
+        equivs = {a: set((u.name, v.name) for u in actions for v in actions 
+                            if (u.name[1] != a and u.name[2] != a and
+                               v.name[1] != a and v.name[2] != a) or u == v)
+                    for a in agents}
+        ActionModel.__init__(self, actions, equivs)
 
 class SeerActionModel(ActionModel):
     def __init__(self, num_players):
@@ -81,8 +91,11 @@ num_players = len(game_string)
 g = WerewolvesGame(game_string)
 g.plot_knowledge()
 if game_string.count('w') == 2:
-    g.apply_action_model(WerewolfActionModel(3))
+    g.apply_action_model(WerewolfActionModel(num_players))
+    g.plot_knowledge()
+if game_string.count('m') == 2:
+    g.apply_action_model(MasonActionModel(num_players))
     g.plot_knowledge()
 if game_string.count('s') == 1:
-    g.apply_action_model(SeerActionModel(3))
+    g.apply_action_model(SeerActionModel(num_players))
     g.plot_knowledge()
