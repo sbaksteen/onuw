@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 from functools import reduce
 import pygraphviz
 import sys
+import string
 
 
-AGENTS = ['a', 'b', 'c', 'd', 'e']
+AGENTS = string.ascii_lowercase
 ROLES = ['t', 'w', 's', 'f', 'm']
 
 class WerewolvesGame:
@@ -19,17 +20,17 @@ class WerewolvesGame:
         relations = {AGENTS[i]: set((a.name, b.name) for a in worlds for b in worlds if a.name[i] == b.name[i]) for i in range(self.num_players)}
         self.kripke = KripkeStructure(worlds, relations)
 
-    def plot_knowledge(self):
+    def plot_knowledge(self, layout="neato"):
         G = nx.DiGraph()
         nodes = self.kripke.worlds.keys()
         edges     = [(w, v, {'label': ''.join([a for a in AGENTS[:self.num_players] if (w,v) in self.kripke.relations[a]])})
                      for (w, v) in reduce(lambda x, y : x.union(y), self.kripke.relations.values()) if w != v]
         G.add_nodes_from(nodes)
         G.add_edges_from(edges) 
-        pos = nx.nx_agraph.graphviz_layout(G)
+        pos = nx.nx_agraph.graphviz_layout(G, layout)
         nodenames = {n: "\n".join(n.split(",")) for n in G.nodes}
         numlines = list(G.nodes.keys())[0].count(",")+1
-        nx.draw(G, pos, with_labels=True, labels=nodenames, node_size=400 * max(self.num_players, numlines*1.5))
+        nx.draw(G, pos, with_labels=True, labels=nodenames, node_size=1200, font_size=48//max(self.num_players, numlines*1.5))
         if (self.num_players < 5):
             nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")})
         plt.show()
@@ -75,6 +76,17 @@ class MasonActionModel(ActionModel):
                     for a in agents}
         ActionModel.__init__(self, actions, equivs)
 
+class FamiliarActionModel(ActionModel):
+    def __init__(self, num_players):
+        agents = AGENTS[:num_players]
+        actions = [Action(f"F{i}W{j}{k}", And(Atom(f"f{i}"), And(Atom(f"w{j}"), Atom(f"w{k}")))) for i in agents
+                                                                                            for j in agents for k in agents
+                                                                                            if i != j and i != k and j < k]
+        equivs = {a: set((u.name, v.name) for u in actions for v in actions
+                             if (u.name[1] != a and v.name[1] != a) or u == v)
+                    for a in agents}
+        ActionModel.__init__(self, actions, equivs)
+
 class SeerActionModel(ActionModel):
     def __init__(self, num_players):
         agents = AGENTS[:num_players]
@@ -87,15 +99,21 @@ class SeerActionModel(ActionModel):
 
 
 game_string = sys.argv[1]
+layout = "neato"
+if len(sys.argv) > 2:
+    layout = sys.argv[2]
 num_players = len(game_string)
 g = WerewolvesGame(game_string)
-g.plot_knowledge()
+g.plot_knowledge(layout)
 if game_string.count('w') == 2:
     g.apply_action_model(WerewolfActionModel(num_players))
-    g.plot_knowledge()
+    g.plot_knowledge(layout)
+if game_string.count('f') == 1:
+    g.apply_action_model(FamiliarActionModel(num_players))
+    g.plot_knowledge(layout)
 if game_string.count('m') == 2:
     g.apply_action_model(MasonActionModel(num_players))
-    g.plot_knowledge()
+    g.plot_knowledge(layout)
 if game_string.count('s') == 1:
     g.apply_action_model(SeerActionModel(num_players))
-    g.plot_knowledge()
+    g.plot_knowledge(layout)
