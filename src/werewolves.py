@@ -20,20 +20,24 @@ class WerewolvesGame:
         relations = {AGENTS[i]: set((a.name, b.name) for a in worlds for b in worlds if a.name[i] == b.name[i]) for i in range(self.num_players)}
         self.kripke = KripkeStructure(worlds, relations)
 
-    def plot_knowledge(self, layout="neato"):
+    def plot_knowledge(self, layout="neato", pos=None):
         G = nx.DiGraph()
         nodes = self.kripke.worlds.keys()
         edges     = [(w, v, {'label': ''.join([a for a in AGENTS[:self.num_players] if (w,v) in self.kripke.relations[a]])})
                      for (w, v) in reduce(lambda x, y : x.union(y), self.kripke.relations.values()) if w != v]
         G.add_nodes_from(nodes)
         G.add_edges_from(edges) 
-        pos = nx.nx_agraph.graphviz_layout(G, layout)
+        if pos is None:
+            pos = nx.nx_agraph.graphviz_layout(G, layout)
+        else:
+            pos = {a: pos[a1] for a in nodes for a1 in pos.keys() if a.startswith(a1)}
         nodenames = {n: "\n".join(n.split(",")) for n in G.nodes}
         numlines = list(G.nodes.keys())[0].count(",")+1
         nx.draw(G, pos, with_labels=True, labels=nodenames, node_size=1200, font_size=48//max(self.num_players, numlines*1.5))
         if (self.num_players < 5):
             nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")})
         plt.show()
+        return pos
 
     def apply_action_model(self, action_model):
         worlds = self.kripke.worlds.values()
@@ -110,16 +114,16 @@ if len(sys.argv) > 2:
     layout = sys.argv[2]
 num_players = len(game_string)
 g = WerewolvesGame(game_string)
-g.plot_knowledge(layout)
+pos = g.plot_knowledge(layout)
 if game_string.count('w') == 2:
     g.apply_action_model(WerewolfActionModel(num_players))
-    g.plot_knowledge(layout)
+    g.plot_knowledge(layout, pos)
 if game_string.count('f') == 1 and game_string.count('w') in [1, 2]:
     g.apply_action_model(FamiliarActionModel(num_players, game_string.count('w')))
-    g.plot_knowledge(layout)
+    g.plot_knowledge(layout, pos)
 if game_string.count('m') == 2:
     g.apply_action_model(MasonActionModel(num_players))
-    g.plot_knowledge(layout)
+    g.plot_knowledge(layout, pos)
 if game_string.count('s') == 1:
     g.apply_action_model(SeerActionModel(num_players))
     g.plot_knowledge(layout)
