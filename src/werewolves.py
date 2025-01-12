@@ -77,11 +77,17 @@ class MasonActionModel(ActionModel):
         ActionModel.__init__(self, actions, equivs)
 
 class FamiliarActionModel(ActionModel):
-    def __init__(self, num_players):
+    def __init__(self, num_players, num_werewolves):
         agents = AGENTS[:num_players]
-        actions = [Action(f"F{i}W{j}{k}", And(Atom(f"f{i}"), And(Atom(f"w{j}"), Atom(f"w{k}")))) for i in agents
-                                                                                            for j in agents for k in agents
-                                                                                            if i != j and i != k and j < k]
+        actions = []
+        if num_werewolves == 2:
+            actions = [Action(f"F{i}W{j}{k}", And(Atom(f"f{i}"), And(Atom(f"w{j}"), Atom(f"w{k}")))) for i in agents
+                                                                                                for j in agents for k in agents
+                                                                                                if i != j and i != k and j < k]
+        if num_werewolves == 1:
+            actions = [Action(f"F{i}W{j}", And(Atom(f"f{i}"), Atom(f"w{j}"))) for i in agents
+                                                                                for j in agents
+                                                                                if i != j]
         equivs = {a: set((u.name, v.name) for u in actions for v in actions
                              if (u.name[1] != a and v.name[1] != a) or u == v)
                     for a in agents}
@@ -108,8 +114,8 @@ g.plot_knowledge(layout)
 if game_string.count('w') == 2:
     g.apply_action_model(WerewolfActionModel(num_players))
     g.plot_knowledge(layout)
-if game_string.count('f') == 1:
-    g.apply_action_model(FamiliarActionModel(num_players))
+if game_string.count('f') == 1 and game_string.count('w') in [1, 2]:
+    g.apply_action_model(FamiliarActionModel(num_players, game_string.count('w')))
     g.plot_knowledge(layout)
 if game_string.count('m') == 2:
     g.apply_action_model(MasonActionModel(num_players))
