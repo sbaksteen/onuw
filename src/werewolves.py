@@ -50,7 +50,7 @@ class WerewolvesGame:
     def apply_action_model(self, action_model):
         worlds = self.kripke.worlds.values()
         
-        # New worlds: (w,a) for w ⊨ pre(a)
+        # New worlds: (w,a) for w |= pre(a)
         new_world_pairs = [(w, a) for w in worlds for a in action_model.actions if a.precon.semantic(self.kripke, w.name)]
         new_worlds = [World(f"{w.name},{a.name}", w.assignment) for (w,a) in new_world_pairs]
 
@@ -67,6 +67,22 @@ class ActionModel:
     def __init__(self, actions, equivs):
         self.actions = actions
         self.equivs = equivs
+
+    def plot(self, layout="neato"):
+        G = nx.DiGraph()
+        nodes = [x.name for x in self.actions]
+        # Edges drawn are given by the union of all agents' relations, with the labels depending on which agents' relations
+        # the edge comes from.
+        edges     = [(w, v, {'label': ''.join([a for a in AGENTS[:len(self.equivs.keys())] if (w,v) in self.equivs[a]])})
+                     for (w, v) in reduce(lambda x, y : x.union(y), self.equivs.values()) if w != v]
+        G.add_nodes_from(nodes)
+        G.add_edges_from(edges) 
+        pos = nx.nx_agraph.graphviz_layout(G, layout)
+        nx.draw(G, pos, with_labels=True, node_size=1200, font_size=24)
+        if (len(edges) < 200):
+            # Draw edge labels if it's reasonable to do so
+            nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")})
+        plt.show()
 
 class Action:
     def __init__(self, name, precon):
@@ -136,7 +152,8 @@ g = WerewolvesGame(game_string)
 pos = g.plot_knowledge(layout)
 if game_string.count('w') == 2:
     # If there are exactly two werewolves, apply the werewolf action model
-    g.apply_action_model(WerewolfActionModel(num_players))
+    action = WerewolfActionModel(num_players)
+    g.apply_action_model(action)
     g.plot_knowledge(layout, pos)
 if game_string.count('f') == 1 and game_string.count('w') in [1, 2]:
     # If there is a familiar and one or two werewolves, apply a familiar action model
