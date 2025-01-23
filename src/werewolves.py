@@ -7,6 +7,7 @@ from functools import reduce
 import pygraphviz
 import sys
 import string
+import math
 
 
 AGENTS = string.ascii_lowercase
@@ -40,7 +41,9 @@ class WerewolvesGame:
         nodenames = {n: "\n".join(n.split(",")) for n in G.nodes}
         numlines = list(G.nodes.keys())[0].count(",")+1
         # Adjust font size based on how large the node label will be
-        nx.draw(G, pos, with_labels=True, labels=nodenames, node_size=1200, font_size=48//max(self.num_players, numlines*1.5))
+        node_size = 1000*math.sqrt(numlines)
+        font_size = round(node_size / 25 / max(numlines*2.1+.4,0))
+        nx.draw(G, pos, with_labels=True, labels=nodenames, node_size=node_size, font_size=font_size, node_color="white", edgecolors="black")
         if (len(edges) < 200):
             # Draw edge labels if it's reasonable to do so
             nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")})
