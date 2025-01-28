@@ -41,12 +41,12 @@ class WerewolvesGame:
         nodenames = {n: "\n".join(n.split(",")) for n in G.nodes}
         numlines = list(G.nodes.keys())[0].count(",")+1
         # Adjust font size based on how large the node label will be
-        node_size = 1000*math.sqrt(numlines)
-        font_size = round(node_size / 25 / max(numlines*2.1+.4,0))
+        node_size = 2500*math.sqrt(numlines)
+        font_size = round(node_size / 40 / max(numlines*2.1+.4,0))
         nx.draw(G, pos, with_labels=True, labels=nodenames, node_size=node_size, font_size=font_size, node_color="white", edgecolors="black")
         if (len(edges) < 200):
             # Draw edge labels if it's reasonable to do so
-            nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")})
+            nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")}, font_size=20)
         plt.show()
         return pos
 
@@ -81,10 +81,12 @@ class ActionModel:
         G.add_nodes_from(nodes)
         G.add_edges_from(edges) 
         pos = nx.nx_agraph.graphviz_layout(G, layout)
-        nx.draw(G, pos, with_labels=True, node_size=1200, font_size=24)
+        node_size = 2500
+        font_size = round(node_size / 40 / 2.5)
+        nx.draw(G, pos, with_labels=True, node_size=node_size, font_size=font_size, node_color="white", edgecolors="black")
         if (len(edges) < 200):
             # Draw edge labels if it's reasonable to do so
-            nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")})
+            nx.draw_networkx_edge_labels(G, pos, {(w,v):l for (w,v,l) in G.edges(data="label")}, font_size=20)
         plt.show()
 
 class Action:
@@ -152,21 +154,37 @@ if len(sys.argv) > 2:
     layout = sys.argv[2]
 num_players = len(game_string)
 g = WerewolvesGame(game_string)
+print("Plotting initial model...")
 pos = g.plot_knowledge(layout)
 if game_string.count('w') == 2:
     # If there are exactly two werewolves, apply the werewolf action model
     action = WerewolfActionModel(num_players)
+    print("Plotting werewolf action model...")
+    action.plot(layout)
     g.apply_action_model(action)
+    print("Plotting new model...")
     g.plot_knowledge(layout, pos)
 if game_string.count('f') == 1 and game_string.count('w') in [1, 2]:
     # If there is a familiar and one or two werewolves, apply a familiar action model
-    g.apply_action_model(FamiliarActionModel(num_players, game_string.count('w')))
+    action = FamiliarActionModel(num_players, game_string.count('w'))
+    print("Plotting familiar action model...")
+    action.plot(layout)
+    g.apply_action_model(action)
+    print("Plotting new model...")
     g.plot_knowledge(layout, pos)
 if game_string.count('m') == 2:
     # If there are exactly two masons, apply the mason action model
-    g.apply_action_model(MasonActionModel(num_players))
+    action = MasonActionModel(num_players)
+    print("Plotting mason action model...")
+    action.plot(layout)
+    g.apply_action_model(action)
+    print("Plotting new model...")
     g.plot_knowledge(layout, pos)
 if game_string.count('s') == 1:
     # If there is a seer, apply the seer action model
-    g.apply_action_model(SeerActionModel(num_players))
+    action = SeerActionModel(num_players)
+    print("Plotting seer action model...")
+    action.plot(layout)
+    g.apply_action_model(action)
+    print("Plotting new model...")
     g.plot_knowledge(layout)
