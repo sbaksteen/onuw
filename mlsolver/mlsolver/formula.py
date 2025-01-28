@@ -15,6 +15,7 @@ class Atom:
     def semantic(self, ks, world_to_test):
         """Function returns assignment of variable in Kripke's world.
         """
+        # MODIFIED for one-night ultimate werewolf: dictionary read instead of looping through a list
         return ks.worlds[world_to_test].assignment.get(self.name, False)
 
     def __eq__(self, other):
@@ -33,6 +34,7 @@ class Box:
         self.inner = inner
 
     def semantic(self, ks, world_to_test):
+        # MODIFIED for one-night ultimate werewolf: return immediately on finding a counterexample
         for relation in ks.relations:
             if relation[0] == world_to_test and not self.inner.semantic(ks, relation[1]):
                 return False
@@ -55,6 +57,7 @@ class Box_a:
         self.agent = agent
 
     def semantic(self, ks, world_to_test):
+        # MODIFIED for one-night ultimate werewolf: return immediately on finding a counterexample
         for relation in ks.relations.get(self.agent, {}):
             if relation[0] == world_to_test and not self.inner.semantic(ks, relation[1]):
                 return False
@@ -101,6 +104,7 @@ class Diamond:
         self.inner = inner
 
     def semantic(self, ks, world_to_test):
+        # MODIFIED for one-night ultimate werewolf: return immediately on finding an example
         for relation in ks.relations:
             if relation[0] == world_to_test and self.inner.semantic(ks, relation[1]):
                 return True
@@ -123,6 +127,7 @@ class Diamond_a:
         self.agent = agent
 
     def semantic(self, ks, world_to_test):
+        # MODIFIED for one-night ultimate werewolf: return immediately on finding an example
         for relation in ks.relations.get(self.agent, {}):
             if relation[0] == world_to_test and self.inner.semantic(ks, relation[1]):
                 return True

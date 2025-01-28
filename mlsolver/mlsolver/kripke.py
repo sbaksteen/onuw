@@ -17,6 +17,7 @@ class KripkeStructure:
 
     def __init__(self, worlds, relations):
         if isinstance(worlds, list) or isinstance(worlds, dict):
+            # MODIFIED: self.worlds is now a dictionary nstead of a list
             self.worlds = {w.name: w for w in worlds}
             self.relations = relations
         else:
@@ -26,6 +27,7 @@ class KripkeStructure:
         """Returns a Kripke structure with minimum sub set of nodes, that each
         of it's nodes forces a given formula.
         """
+        # MODIFIED to use dictionary of worlds
         for i, subset in enumerate(self.get_power_set_of_worlds()):
             ks = KripkeStructure(list(self.worlds.values()), copy.deepcopy(self.relations))
             for element in subset:
@@ -54,6 +56,7 @@ class KripkeStructure:
         """Returns a list with all possible sub sets of world names, sorted
         by ascending number of their elements.
         """
+        # MODIFIED to use dictionary of worlds
         sub_set = [{}]
         worlds_by_name = []
         for w in self.worlds.values():
@@ -68,6 +71,7 @@ class KripkeStructure:
         """Returns a list with all worlds of Kripke structure, where formula
          is not satisfiable
         """
+        # MODIFIED to use dictionary of worlds
         nodes_not_follow_formula = []
         for nodes in self.worlds.values():
             if not formula.semantic(self, nodes.name):
@@ -77,6 +81,7 @@ class KripkeStructure:
     def __eq__(self, other):
         """Returns true iff two Kripke structures are equivalent
         """
+        # MODIFIED to use dictionary of worlds
         if (self.worlds == {} and not other.worlds == {}) \
                 or (not self.worlds == {} and other.worlds == {}):
             return False
@@ -100,6 +105,7 @@ class KripkeStructure:
         return True
 
     def __str__(self):
+        # MODIFIED to use dictionary of worlds
         worlds_str = "(W = {"
         for world in self.worlds.values():
             worlds_str += str(world)
